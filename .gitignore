@@ -1,2 +1,6 @@
+/.vscode
 
 /build
+
+/client/dependencies
+./client/src/glad.c
