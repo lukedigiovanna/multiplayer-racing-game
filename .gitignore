@@ -3,4 +3,5 @@
 /build
 
 /client/dependencies
-./client/src/glad.c
+
+client/src/glad.c

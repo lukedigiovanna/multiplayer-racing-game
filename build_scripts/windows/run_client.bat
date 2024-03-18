@@ -3,3 +3,5 @@
 @echo off
 cd ../../build/client
 GameClient.exe
+echo.
+pause > nul
