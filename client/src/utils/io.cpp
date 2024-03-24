@@ -8,5 +8,7 @@ std::string read_file(std::string const& filepath) {
     std::ifstream t(filepath);
     std::stringstream buffer;
     buffer << t.rdbuf();
-    return buffer.str();
+    buffer << "\0";
+    t.close();
+    return buffer.str().c_str();
 }

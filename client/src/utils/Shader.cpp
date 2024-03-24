@@ -5,9 +5,11 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <stdexcept>
 
 unsigned int compileShader(std::string const& filepath, int shaderType) {
     std::string src = read_file(filepath);
+    
     const char* c_src = src.c_str();
     unsigned int shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &c_src, NULL);
@@ -41,7 +43,7 @@ Shader::Shader(std::string const& vsPath, std::string const& fsPath) {
     if (!success) {
         glGetProgramInfoLog(this->program, 512, NULL, infoLog);
         std::cout << "ERROR linking shader: " << vsPath << ", " << fsPath << std::endl;
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        throw std::runtime_error("ERROR::SHADER::PROGRAM::LINKING_FAILED\n" + std::string(infoLog));
     }
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
