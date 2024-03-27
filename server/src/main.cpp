@@ -5,6 +5,7 @@
 #include <sys/socket.h> 
 #include <arpa/inet.h> 
 #include <netinet/in.h> 
+#include <cstring>
 
 #include <thread>
 
@@ -13,6 +14,12 @@
 #define PORT 8080
 #define MAXLINE 1024
 
+#define NUM_OPERATIONS 1
+
+const char* operations[NUM_OPERATIONS] = {
+    "JOIN"
+};
+
 int main() {
     int sockfd; 
     char buffer[MAXLINE];
@@ -20,7 +27,10 @@ int main() {
 
     // create socket
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        throw std::runtime_error("Error: socket creation failed.");
+        std::cout << "Error: socket creation failed. Error code: " << errno
+              << " - " << strerror(errno) << std::endl;
+        // throw std::runtime_error("Error: socket creation failed.");
+        return -1;
     }
 
     // Clear the structs
@@ -48,18 +58,27 @@ int main() {
         n = recvfrom(sockfd, (char *) buffer, MAXLINE, MSG_WAITALL, (sockaddr *) &clientAddress, &len);
         buffer[n] = '\0';
 
-        // interpret the sent message as an integer
-        int t = atoi(buffer);
+        std::string msg;
 
-        // calculate the square
-        int t2 = t * t;
-
-        std::string msg = std::to_string(t2);
+        if (n == 0) {
+            msg = "ERROR: Receieved a blank request";
+        }
+        else { // parse the request
+            // The first bit will tell which operation the request is doing
+            char operation = buffer[0];
+            if (operation >= NUM_OPERATIONS) {
+                msg = "ERROR: Received undefined operation: " + std::to_string(operation);
+            }
+            else {
+                msg = "Got JOIN operation!";
+            }
+        }
+        
 
         // send square number to
         sendto(sockfd, msg.c_str(), msg.length(), 0, (const struct sockaddr *) &clientAddress, len);
         
-        std::cout << "received " << t << " and sent " << t2 << ".\n";
+        std::cout << "Sent " << msg << ".\n";
     }
 
     return 0;
