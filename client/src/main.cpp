@@ -5,15 +5,64 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <thread>
+#include <chrono>
+#include <atomic>
+#include <string>
 
 #include "utils/Shader.h"
 #include "utils/Mesh.h"
 #include "utils/input.h"
 
+#include <stdlib.h> 
+#include <unistd.h> 
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <arpa/inet.h> 
+#include <netinet/in.h> 
+
+#define PORT 8080
+#define MAXLINE 1024
+
 #define YAW_BOUNDS M_PI / 2 - 0.05f
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+std::atomic<bool> gameIsActive = true;
+
+void network_thread_func() {
+    int sockfd;
+    char buffer[MAXLINE];
+    struct sockaddr_in serverAddress;
+
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        std::cerr << "Error: socket creation failed\n";
+    }
+
+    memset(&serverAddress, 0, sizeof(serverAddress));
+
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(PORT);
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+    int n;
+    socklen_t len;
+
+    int time;
+    while (gameIsActive) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::cout << "Sending: " << time << "\n";
+        std::string msg = std::to_string(time);
+        sendto(sockfd, msg.c_str(), msg.length(), 0, (const sockaddr *) &serverAddress, sizeof(serverAddress));
+        n = recvfrom(sockfd, (char *) buffer, MAXLINE, MSG_WAITALL, (sockaddr *) &serverAddress, &len);
+        buffer[n] = '\0';
+        std::cout << "Server: " << buffer << std::endl;
+        time++;
+    }
+
+    close(sockfd);
 }
 
 int program() {
@@ -45,6 +94,8 @@ int program() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         throw std::runtime_error("Failed to initialize GLAD");
     }
+
+    std::thread network_thread(network_thread_func);
 
     Shader shader = Shader("assets/shaders/vs.glsl", "assets/shaders/fs.glsl");
     shader.use();
@@ -120,7 +171,7 @@ int program() {
 
     bool focused = false;
 
-    while (!glfwWindowShouldClose(window)) {
+    while (gameIsActive) {
         if (focused && input::keyPressed(GLFW_KEY_ESCAPE)) {
             focused = false;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -184,9 +235,13 @@ int program() {
 
         lastMouseX = mouseX;
         lastMouseY = mouseY;
+
+        gameIsActive = !glfwWindowShouldClose(window);
     }
 
     glfwTerminate();
+
+    network_thread.join();
 
     return 0;
 }
