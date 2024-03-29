@@ -5,7 +5,6 @@ add_executable(GameClient
     src/utils/Shader.cpp
     src/utils/io.cpp
     src/utils/input.cpp
-    # Add other source files here
 )
 
 file(COPY ${CMAKE_SOURCE_DIR}/client/assets DESTINATION ${CMAKE_BINARY_DIR}/client)

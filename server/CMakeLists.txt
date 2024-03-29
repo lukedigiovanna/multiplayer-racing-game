@@ -1,10 +1,12 @@
 add_executable(GameServer
     src/main.cpp
-    # Add other source files here
+    src/Connection.cpp
+    src/Player.cpp
+    src/mathutils.hpp
 )
 
 target_include_directories(GameServer PRIVATE
-    include
+    "${CMAKE_SOURCE_DIR}/server/dependencies/include"
 )
 
 target_link_libraries(GameServer

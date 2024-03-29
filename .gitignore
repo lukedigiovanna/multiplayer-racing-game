@@ -3,5 +3,6 @@
 /build
 
 /client/dependencies
+/server/dependencies
 
 client/src/glad.c

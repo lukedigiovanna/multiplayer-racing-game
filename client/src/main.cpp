@@ -50,17 +50,25 @@ void network_thread_func() {
     int n;
     socklen_t len;
 
-    int time;
+    // join game
+    char msg[2];
+    msg[0] = 0; // join game code
+    msg[1] = '\0';
+    sendto(sockfd, msg, 2, 0, (const sockaddr *) &serverAddress, sizeof(serverAddress));
+    n = recvfrom(sockfd, (char *) buffer, MAXLINE, MSG_WAITALL, (sockaddr *) &serverAddress, &len);
+    buffer[n] = '\0';
+    std::cout << "Join request response: " << +buffer[0] << std::endl;
+
     while (gameIsActive) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        std::cout << "Sending: " << time << "\n";
-        std::string msg = std::to_string(time);
-        sendto(sockfd, msg.c_str(), msg.length(), 0, (const sockaddr *) &serverAddress, sizeof(serverAddress));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
         n = recvfrom(sockfd, (char *) buffer, MAXLINE, MSG_WAITALL, (sockaddr *) &serverAddress, &len);
-        buffer[n] = '\0';
-        std::cout << "Server: " << buffer << std::endl;
-        time++;
+        float* playerData = (float*) buffer;
+        std::cout << playerData[0] << ", " << playerData[1] << ", " << playerData[2] 
+              << " : " << playerData[3] << ", " << playerData[4] << ", " << playerData[5] << "\n";
     }
+
+    msg[0] = 1; // leave game code
+    sendto(sockfd, msg, 2, 0, (const sockaddr *) &serverAddress, sizeof(serverAddress));
 
     close(sockfd);
 }
